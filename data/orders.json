@@ -1,0 +1,55 @@
+{
+  "orders": [
+    {
+      "id": "order_001",
+      "userName": "John Doe",
+      "email": "john@example.com",
+      "products": [
+        {
+          "id": "1",
+          "name": "Premium Wireless Headphones",
+          "quantity": 1,
+          "price": 269.99
+        }
+      ],
+      "status": "shipped",
+      "total": 269.99,
+      "date": "2024-01-15T10:30:00Z",
+      "shippingAddress": "123 Main St, New York, NY 10001"
+    },
+    {
+      "id": "order_002",
+      "userName": "Jane Smith",
+      "email": "jane@example.com",
+      "products": [
+        {
+          "id": "3",
+          "name": "Smart Fitness Watch",
+          "quantity": 1,
+          "price": 169.99
+        }
+      ],
+      "status": "pending",
+      "total": 169.99,
+      "date": "2024-01-16T14:20:00Z",
+      "shippingAddress": "456 Oak Ave, Los Angeles, CA 90210"
+    },
+    {
+      "id": "order_003",
+      "userName": "Mike Johnson",
+      "email": "mike@example.com",
+      "products": [
+        {
+          "id": "5",
+          "name": "Wireless Earbuds",
+          "quantity": 2,
+          "price": 63.99
+        }
+      ],
+      "status": "delivered",
+      "total": 127.98,
+      "date": "2024-01-14T09:15:00Z",
+      "shippingAddress": "789 Pine St, Chicago, IL 60601"
+    }
+  ]
+}
