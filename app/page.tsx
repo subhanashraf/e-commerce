@@ -4,18 +4,10 @@ import { HeroCarousel } from "@/components/hero-carousel"
 import { CompanySection } from "@/components/company-section"
 import { FAQSection } from "@/components/faq-section"
 import { Footer } from "@/components/footer"
-import { readFile } from "fs/promises"
-import { join } from "path"
-
-async function getProducts() {
-  const filePath = join(process.cwd(), "data", "products.json")
-  const fileContent = await readFile(filePath, "utf8")
-  const data = JSON.parse(fileContent)
-  return data.products
-}
+import { getProducts } from "@/lib/data-store"
 
 export default async function HomePage() {
-  const products = await getProducts()
+  const products = getProducts()
   const featuredProducts = products.slice(0, 6)
 
   return (

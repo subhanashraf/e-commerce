@@ -1,16 +1,8 @@
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
-import { readFile } from "fs/promises"
-import { join } from "path"
-
-async function getFAQData() {
-  const filePath = join(process.cwd(), "data", "company.json")
-  const fileContent = await readFile(filePath, "utf8")
-  const data = JSON.parse(fileContent)
-  return data.faq
-}
+import { getCompany } from "@/lib/data-store"
 
 export async function FAQSection() {
-  const faq = await getFAQData()
+  const { faq } = getCompany()
 
   return (
     <section className="py-16 px-4 bg-muted/20">

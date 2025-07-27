@@ -1,17 +1,9 @@
 import { Navbar } from "@/components/navbar"
 import { ProductCard } from "@/components/product-card"
-import { readFile } from "fs/promises"
-import { join } from "path"
-
-async function getProducts() {
-  const filePath = join(process.cwd(), "data", "products.json")
-  const fileContent = await readFile(filePath, "utf8")
-  const data = JSON.parse(fileContent)
-  return data.products
-}
+import { getProducts } from "@/lib/data-store"
 
 export default async function ShopPage() {
-  const products = await getProducts()
+  const products = getProducts()
 
   return (
     <div className="min-h-screen">

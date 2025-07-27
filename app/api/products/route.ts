@@ -1,14 +1,10 @@
 import { NextResponse } from "next/server"
-import { readFile } from "fs/promises"
-import { join } from "path"
+import { getProducts } from "@/lib/data-store"
 
 export async function GET() {
   try {
-    const filePath = join(process.cwd(), "data", "products.json")
-    const fileContent = await readFile(filePath, "utf8")
-    const data = JSON.parse(fileContent)
-
-    return NextResponse.json(data)
+    const products = getProducts()
+    return NextResponse.json({ products })
   } catch (error) {
     return NextResponse.json({ error: "Failed to load products" }, { status: 500 })
   }

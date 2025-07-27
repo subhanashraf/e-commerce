@@ -1,8 +1,7 @@
 "use client"
 
 import type React from "react"
-
-import { useState } from "react"
+import { useState, useEffect, useRef } from "react" // Import useEffect and useRef
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -19,6 +18,11 @@ interface ChatMessage {
   extractedData?: any
 }
 
+// --- Constants for API Limiting ---
+const DAILY_PRODUCT_CHAT_LIMIT = 20 // Max calls per 24 hours for this specific API
+const PRODUCT_CHAT_LAST_RESET_TIMESTAMP_KEY = "product_chat_api_last_reset"
+const PRODUCT_CHAT_REMAINING_CALLS_KEY = "product_chat_api_remaining_calls"
+
 export function ProductChatbot() {
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
@@ -31,9 +35,53 @@ export function ProductChatbot() {
   const [input, setInput] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const { toast } = useToast()
+  // --- New state for API call count ---
+  const [remainingCalls, setRemainingCalls] = useState(DAILY_PRODUCT_CHAT_LIMIT)
+
+  // Ref to keep ScrollArea scrolled to bottom
+  const messagesEndRef = useRef<HTMLDivElement>(null)
+
+  // --- useEffect to initialize/reset daily call count ---
+  useEffect(() => {
+    const lastResetTimestamp = localStorage.getItem(PRODUCT_CHAT_LAST_RESET_TIMESTAMP_KEY)
+    const storedRemainingCalls = localStorage.getItem(PRODUCT_CHAT_REMAINING_CALLS_KEY)
+
+    const now = Date.now()
+    const oneDayInMs = 24 * 60 * 60 * 1000
+
+    if (lastResetTimestamp && (now - parseInt(lastResetTimestamp, 10)) < oneDayInMs) {
+      // Less than 24 hours since last reset, load stored count
+      setRemainingCalls(storedRemainingCalls ? parseInt(storedRemainingCalls, 10) : DAILY_PRODUCT_CHAT_LIMIT)
+    } else {
+      // More than 24 hours or no timestamp, reset
+      setRemainingCalls(DAILY_PRODUCT_CHAT_LIMIT)
+      localStorage.setItem(PRODUCT_CHAT_REMAINING_CALLS_KEY, DAILY_PRODUCT_CHAT_LIMIT.toString())
+      localStorage.setItem(PRODUCT_CHAT_LAST_RESET_TIMESTAMP_KEY, now.toString())
+    }
+  }, []) // Empty dependency array means this runs once on mount
+
+  // Scroll to bottom whenever messages change
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
 
   const handleSend = async () => {
     if (!input.trim()) return
+
+    // --- Check for API limit before sending ---
+    if (remainingCalls <= 0) {
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: (Date.now() + 1).toString(),
+          type: "bot",
+          content:
+            "You've reached your daily product query limit for the AI assistant. Please try again tomorrow or manually add products using the form.",
+        },
+      ])
+      setInput("")
+      return // Stop the function here
+    }
 
     const userMessage: ChatMessage = {
       id: Date.now().toString(),
@@ -88,6 +136,14 @@ export function ProductChatbot() {
         }
 
         setMessages((prev) => [...prev, botMessage])
+
+        // --- Decrement remaining calls on successful API response ---
+        setRemainingCalls((prev) => {
+          const newCount = prev - 1;
+          localStorage.setItem(PRODUCT_CHAT_REMAINING_CALLS_KEY, newCount.toString());
+          return newCount;
+        });
+
       } else {
         throw new Error(data.error || "Failed to process request")
       }
@@ -105,6 +161,10 @@ export function ProductChatbot() {
   }
 
   const handleAddProduct = async (extractedData: any) => {
+    // This function doesn't directly call the /api/product-chat,
+    // so it doesn't need to decrement the `remainingCalls`.
+    // It's calling `addProductFromAI` which is a server action, not the chat API.
+
     if (!extractedData.name || !extractedData.price) {
       toast({
         title: "Missing Information",
@@ -156,6 +216,10 @@ export function ProductChatbot() {
           <Bot className="h-4 w-4 sm:h-5 sm:w-5 text-primary flex-shrink-0" />
           <span className="truncate">AI Product Assistant</span>
         </CardTitle>
+        {/* Display remaining calls here */}
+        <span className="text-sm text-muted-foreground ml-auto pr-2">
+          Calls left today: {remainingCalls}
+        </span>
       </CardHeader>
 
       <CardContent className="flex-1 flex flex-col p-2 sm:p-4 overflow-hidden min-h-0">
@@ -220,6 +284,8 @@ export function ProductChatbot() {
                 </div>
               </div>
             ))}
+            {/* Ref for auto-scrolling */}
+            <div ref={messagesEndRef} />
             {isLoading && (
               <div className="flex gap-2 sm:gap-3 justify-start">
                 <div className="w-6 h-6 sm:w-8 sm:h-8 bg-gradient-to-r from-secondary to-secondary/80 rounded-full flex items-center justify-center">
@@ -249,12 +315,12 @@ export function ProductChatbot() {
             onChange={(e) => setInput(e.target.value)}
             onKeyPress={handleKeyPress}
             placeholder="Describe your product..."
-            disabled={isLoading}
+            disabled={isLoading || remainingCalls <= 0} // Disable input if loading or limit reached
             className="transition-all focus:scale-105 bg-gradient-to-r from-background to-background/95 border-primary/20 focus:border-primary/40 text-xs sm:text-sm min-w-0"
           />
           <Button
             onClick={handleSend}
-            disabled={isLoading || !input.trim()}
+            disabled={isLoading || !input.trim() || remainingCalls <= 0} // Disable send if loading, empty input, or limit reached
             className="hover:scale-110 transition-transform bg-gradient-to-r from-primary to-purple-600 flex-shrink-0"
             size="sm"
           >

@@ -1,28 +1,8 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { readFile } from "fs/promises"
+
 import { join } from "path"
+import { getProducts } from "@/lib/data-store"
 
-// Initialize OpenAI (if API key is available)
-// let openai: any = null
-// if (process.env.OPENAI_API_KEY) {
-//   try {
-//     const { OpenAI } = require("openai")
-//     openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
-//   } catch (error) {
-//     console.warn("OpenAI not available:", error.message)
-//   }
-// }
-
-async function getProducts() {
-  try {
-    const filePath = join(process.cwd(), "data", "products.json")
-    const fileContent = await readFile(filePath, "utf8")
-    const data = JSON.parse(fileContent)
-    return data.products
-  } catch (error) {
-    return []
-  }
-}
 
 export async function POST(req: NextRequest) {
   try {
@@ -114,8 +94,7 @@ const response = await fetch(
 
 const result = await response.json();
 
-// Proper response extraction
-console.log(result,"result");
+
 
 const aiAnswer = result.candidates?.[0]?.content?.parts?.[0]?.text || 
   "Sorry, I couldn't generate a response.";

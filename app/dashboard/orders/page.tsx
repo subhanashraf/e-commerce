@@ -1,24 +1,16 @@
 import { OrderManagement } from "@/components/order-management"
-import { readFile } from "fs/promises"
-import { join } from "path"
-
-async function getOrders() {
-  const filePath = join(process.cwd(), "data", "products.json")
-  const fileContent = await readFile(filePath, "utf8")
-  const data = JSON.parse(fileContent)
-  return data.orders
-}
+import { getOrders } from "@/lib/data-store"
 
 export default async function OrdersPage() {
-  const orders = await getOrders()
+  const orders = getOrders()
 
   return (
-    <div className="p-8">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-purple-400 bg-clip-text text-transparent">
+    <div className="p-4 sm:p-6 lg:p-8">
+      <div className="mb-6 sm:mb-8">
+        <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-primary to-purple-400 bg-clip-text text-transparent">
           Order Management
         </h1>
-        <p className="text-muted-foreground">Manage and track all customer orders</p>
+        <p className="text-sm sm:text-base text-muted-foreground mt-1">Manage and track all customer orders</p>
       </div>
 
       <OrderManagement orders={orders} />

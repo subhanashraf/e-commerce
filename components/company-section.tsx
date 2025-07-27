@@ -1,16 +1,8 @@
 import { Card, CardContent } from "@/components/ui/card"
-import { readFile } from "fs/promises"
-import { join } from "path"
-
-async function getCompanyData() {
-  const filePath = join(process.cwd(), "data", "company.json")
-  const fileContent = await readFile(filePath, "utf8")
-  const data = JSON.parse(fileContent)
-  return data.company
-}
+import { getCompany } from "@/lib/data-store"
 
 export async function CompanySection() {
-  const company = await getCompanyData()
+  const { company } = getCompany()
 
   return (
     <section className="py-16 px-4">

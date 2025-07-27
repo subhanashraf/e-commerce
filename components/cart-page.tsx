@@ -8,7 +8,12 @@ import { Minus, Plus, Trash2, ShoppingBag, CreditCard } from "lucide-react"
 import Link from "next/link"
 import { useState } from "react"
 import { useToast } from "@/hooks/use-toast"
+import { createStripeCheckoutitem } from "@/lib/actions"
 
+interface ProduectNUmber {
+  productId:string,
+  quantity:number
+}
 export function CartPage() {
   const { items, updateQuantity, removeFromCart, totalPrice, clearCart } = useCart()
   const [isCheckingOut, setIsCheckingOut] = useState(false)
@@ -17,16 +22,40 @@ export function CartPage() {
   const handleCheckout = async () => {
     setIsCheckingOut(true)
 
-    // Simulate checkout process
-    await new Promise((resolve) => setTimeout(resolve, 2000))
-
+    if (items.length === 0) {
     toast({
-      title: "Checkout Successful!",
-      description: "Your order has been placed successfully.",
+      title: "Cart is Empty",
+      description: "Please add items to your cart before checking out.",
+      variant: "destructive",
     })
+     const checkoutItems  = items.map(item => ({
+    productId: item.id,       // Assuming your cart item has an 'id' property
+    quantity: item.quantity,  // Assuming your cart item has a 'quantity' property
+  }))
 
-    clearCart()
-    setIsCheckingOut(false)
+      try {
+        const result = await createStripeCheckoutitem(checkoutItems)
+  
+        if (result.success && result.url) {
+          window.location.href = result.url
+           clearCart()
+        } else {
+          toast({
+            title: "Checkout Error",
+            description: result.error || "Failed to create checkout session",
+            variant: "destructive",
+          })
+        }
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: "Something went wrong. Please try again.",
+          variant: "destructive",
+        })
+      } finally {
+         setIsCheckingOut(false)
+      }    
+  }
   }
 
   if (items.length === 0) {

@@ -59,13 +59,16 @@ export function ProductCard({ product }: ProductCardProps) {
       <CardContent className="p-0">
         <Link href={`/product/${product.id}`}>
           <div className="relative overflow-hidden rounded-t-lg">
-            <Image
+            <img src={product.image} alt={product.name || "/placeholder.svg"} width={400}
+              height={300}
+               className="w-full h-48 object-cover group-hover:scale-110 transition-transform duration-500" />
+            {/* <Image
               src={product.image || "/placeholder.svg"}
               alt={product.name}
               width={400}
               height={300}
               className="w-full h-48 object-cover group-hover:scale-110 transition-transform duration-500"
-            />
+            /> */}
             {product.discount && (
               <Badge className="absolute top-2 right-2 bg-red-600 hover:bg-red-700 animate-pulse">
                 -{product.discount}%
