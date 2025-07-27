@@ -38,11 +38,18 @@ export function ProductList() {
 
   const loadProducts = async () => {
     try {
+      console.log("📡 Loading products...")
       const response = await fetch("/api/products")
       const data = await response.json()
-      setProducts(data.products || [])
+
+      if (data.success) {
+        console.log(`📦 Loaded ${data.products.length} products`)
+        setProducts(data.products || [])
+      } else {
+        throw new Error(data.error || "Failed to load products")
+      }
     } catch (error) {
-      console.error("Error loading products:", error)
+      console.error("❌ Error loading products:", error)
       toast({
         title: "Error",
         description: "Failed to load products",
@@ -62,20 +69,30 @@ export function ProductList() {
     if (!confirm("Are you sure you want to delete this product?")) return
 
     try {
+      console.log("🗑️ Deleting product:", productId)
       const response = await fetch(`/api/products/${productId}`, {
         method: "DELETE",
       })
 
-      if (response.ok) {
+      const data = await response.json()
+
+      if (data.success) {
+        console.log("✅ Product deleted successfully")
         setProducts(products.filter((p) => p.id !== productId))
         toast({
           title: "Product deleted",
           description: "Product has been successfully deleted",
         })
+
+        // Refresh the page to update counters
+        setTimeout(() => {
+          window.location.reload()
+        }, 1000)
       } else {
-        throw new Error("Failed to delete product")
+        throw new Error(data.error || "Failed to delete product")
       }
     } catch (error) {
+      console.error("❌ Error deleting product:", error)
       toast({
         title: "Error",
         description: "Failed to delete product",
@@ -92,6 +109,11 @@ export function ProductList() {
       title: "Product updated",
       description: "Product has been successfully updated",
     })
+
+    // Refresh the page to update counters
+    setTimeout(() => {
+      window.location.reload()
+    }, 1000)
   }
 
   if (isLoading) {

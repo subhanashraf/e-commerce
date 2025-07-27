@@ -1,11 +1,11 @@
 import { Navbar } from "@/components/navbar"
 import { ProductDetail } from "@/components/product-detail"
 import { ProductCard } from "@/components/product-card"
-import { getProduct, getProducts } from "@/lib/data-store"
+import {  getProducts } from "@/lib/data-store"
 import { notFound } from "next/navigation"
 
 export default async function ProductPage({ params }: { params: { id: string } }) {
-  const product = getProduct(params.id)
+  const product = getProducts(params.id)
 
   if (!product) {
     notFound()

@@ -3,7 +3,8 @@ import { ProductCard } from "@/components/product-card"
 import { getProducts } from "@/lib/data-store"
 
 export default async function ShopPage() {
-  const products = getProducts()
+  const rawProducts = await getProducts();
+  const products = Array.isArray(rawProducts) ? rawProducts : [];
 
   return (
     <div className="min-h-screen">

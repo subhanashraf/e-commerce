@@ -7,8 +7,11 @@ import { Footer } from "@/components/footer"
 import { getProducts } from "@/lib/data-store"
 
 export default async function HomePage() {
-  const products = getProducts()
-  const featuredProducts = products.slice(0, 6)
+   const rawProducts = await getProducts();
+  const allProducts = Array.isArray(rawProducts) ? rawProducts : [];
+
+  // Now, featuredProducts is safely sliced from a guaranteed array
+  const featuredProducts = allProducts.slice(0, 6);
 
   return (
     <div className="min-h-screen">

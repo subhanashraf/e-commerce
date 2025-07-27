@@ -1,31 +1,45 @@
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Overview } from "@/components/overview"
 import { RecentSales } from "@/components/recent-sales"
 import { CartSummary } from "@/components/cart-summary"
-import { getProducts, getOrders, getUsers } from "@/lib/data-store"
-import { Package, BarChart3, ShoppingCart, DollarSign } from "lucide-react"
+import { getProducts, getOrders, getAnalytics } from "@/lib/data-store"
+import { Package, BarChart3, ShoppingCart, DollarSign, Users } from "lucide-react"
 
 export default async function DashboardPage() {
-  const products = getProducts()
-  const orders = getOrders()
-  const users = getUsers()
+ // AWAIT all asynchronous data fetching functions
+  // And ensure they return arrays or expected objects, providing fallbacks
+  const rawProducts = await getProducts();
+  const products = Array.isArray(rawProducts) ? rawProducts : []; // Ensure products is an array
 
+  const rawOrders = await getOrders();
+  const orders = Array.isArray(rawOrders) ? rawOrders : []; // Ensure orders is an array
+
+  const rawAnalytics = await getAnalytics();
+  // Ensure analytics is an object, providing default values if null/undefined
+  const analytics = rawAnalytics || { totalRevenue: 0, totalCustomers: 0 };
+
+  // Calculate real statistics from actual data
   const totalProducts = products.length
-  const totalValue = products.reduce((sum: number, product: any) => sum + product.price * product.stock, 0)
-  const totalSold = orders.reduce(
-    (sum: number, order: any) =>
-      sum + order.products.reduce((orderSum: number, product: any) => orderSum + product.quantity, 0),
-    0,
-  )
-  const totalRevenue = orders.reduce((sum: number, order: any) => sum + order.total, 0)
+  const totalOrders = orders.length
+  const totalRevenue = analytics.totalRevenue || 0 // Use fallback for analytics properties
+  const totalCustomers = analytics.totalCustomers || 0 // Use fallback for analytics properties
+
+  // Calculate inventory value - now products is guaranteed to be an array
+  const inventoryValue = products.reduce((sum: number, product: any) => {
+    // Add checks for product.price and product.stock to prevent NaN
+    const price = typeof product.price === 'number' ? product.price : 0;
+    const stock = typeof product.stock === 'number' ? product.stock : 0;
+    return sum + price * stock;
+  }, 0);
 
   const stats = {
     totalProducts,
-    totalValue,
-    totalSold,
+    inventoryValue,
+    totalOrders,
     totalRevenue,
+    totalCustomers,
     orders,
-    users,
   }
 
   return (
@@ -34,11 +48,11 @@ export default async function DashboardPage() {
         <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-primary to-purple-400 bg-clip-text text-transparent">
           Dashboard Overview
         </h1>
-        <p className="text-sm sm:text-base text-muted-foreground mt-1">Welcome to your store management dashboard</p>
+        <p className="text-sm sm:text-base text-muted-foreground mt-1">Real-time analytics from your store</p>
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 sm:gap-6">
         <Card className="hover:shadow-lg transition-shadow">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Products</CardTitle>
@@ -56,19 +70,19 @@ export default async function DashboardPage() {
             <BarChart3 className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">${stats.totalValue.toFixed(2)}</div>
+            <div className="text-2xl font-bold">${stats.inventoryValue.toFixed(2)}</div>
             <p className="text-xs text-muted-foreground">Total inventory worth</p>
           </CardContent>
         </Card>
 
         <Card className="hover:shadow-lg transition-shadow">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Products Sold</CardTitle>
+            <CardTitle className="text-sm font-medium">Total Orders</CardTitle>
             <ShoppingCart className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.totalSold}</div>
-            <p className="text-xs text-muted-foreground">Total units sold</p>
+            <div className="text-2xl font-bold">{stats.totalOrders}</div>
+            <p className="text-xs text-muted-foreground">Completed orders</p>
           </CardContent>
         </Card>
 
@@ -79,7 +93,18 @@ export default async function DashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">${stats.totalRevenue.toFixed(2)}</div>
-            <p className="text-xs text-muted-foreground">Revenue generated</p>
+            <p className="text-xs text-muted-foreground">Revenue from Stripe</p>
+          </CardContent>
+        </Card>
+
+        <Card className="hover:shadow-lg transition-shadow">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Customers</CardTitle>
+            <Users className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.totalCustomers}</div>
+            <p className="text-xs text-muted-foreground">Unique customers</p>
           </CardContent>
         </Card>
       </div>
@@ -89,6 +114,7 @@ export default async function DashboardPage() {
         <Card className="hover:shadow-lg transition-shadow">
           <CardHeader>
             <CardTitle>Sales Overview</CardTitle>
+            <p className="text-sm text-muted-foreground">Monthly sales from actual orders</p>
           </CardHeader>
           <CardContent className="p-2 sm:p-6">
             <Overview />
@@ -99,10 +125,11 @@ export default async function DashboardPage() {
         <Card className="hover:shadow-lg transition-shadow">
           <CardHeader>
             <CardTitle>Recent Sales</CardTitle>
+            <p className="text-sm text-muted-foreground">Latest orders from Stripe</p>
           </CardHeader>
           <CardContent className="p-2 sm:p-6">
             <div className="overflow-x-auto">
-              <RecentSales orders={stats.orders} />
+              {/* <RecentSales orders={stats.orders} /> */}
             </div>
           </CardContent>
         </Card>
