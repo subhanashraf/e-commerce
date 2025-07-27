@@ -1,33 +1,20 @@
 import { Navbar } from "@/components/navbar"
 import { ProductDetail } from "@/components/product-detail"
 import { ProductCard } from "@/components/product-card"
-import { readFile } from "fs/promises"
-import { join } from "path"
+import { getProduct, getProducts } from "@/lib/data-store"
 import { notFound } from "next/navigation"
 
-async function getProduct(id: string) {
-  const filePath = join(process.cwd(), "data", "products.json")
-  const fileContent = await readFile(filePath, "utf8")
-  const data = JSON.parse(fileContent)
-  return data.products.find((p: any) => p.id === id)
-}
-
-async function getRelatedProducts(currentProductId: string, category: string) {
-  const filePath = join(process.cwd(), "data", "products.json")
-  const fileContent = await readFile(filePath, "utf8")
-  const data = JSON.parse(fileContent)
-
-  return data.products.filter((p: any) => p.id !== currentProductId && p.category === category).slice(0, 4)
-}
-
 export default async function ProductPage({ params }: { params: { id: string } }) {
-  const product = await getProduct(params.id)
+  const product = getProduct(params.id)
 
   if (!product) {
     notFound()
   }
 
-  const relatedProducts = await getRelatedProducts(product.id, product.category)
+  const allProducts = getProducts()
+  const relatedProducts = allProducts
+    .filter((p: any) => p.id !== product.id && p.category === product.category)
+    .slice(0, 4)
 
   return (
     <div className="min-h-screen">

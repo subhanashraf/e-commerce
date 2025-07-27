@@ -1,19 +1,10 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { readFile } from "fs/promises"
 import { join } from "path"
+import { getProducts } from "@/lib/data-store"
 
 
 
-async function getProducts() {
-  try {
-    const filePath = join(process.cwd(), "data", "products.json")
-    const fileContent = await readFile(filePath, "utf8")
-    const data = JSON.parse(fileContent)
-    return data.products
-  } catch (error) {
-    return []
-  }
-}
 
 export async function POST(req: NextRequest) {
   try {
@@ -55,6 +46,14 @@ Brand: ComfortWear
 Meta Tags: t-shirt, cotton, classic, casual, apparel
 Image URL: https://images.unsplash.com/photo-1576566526180-21a42a220-4100?w=800&h=600&fit=crop
 
+
+"Your task is to act as an AI product assistant. When suggesting product details, if you provide an image URL, it MUST be from Unsplash and MUST follow this exact format: 'https://images.unsplash.com/photo-PHOTO_ID?w=400&h=400&fit=crop'. Replace PHOTO_ID with the actual Unsplash photo ID. Ensure the image is highly relevant to the product. Always include 'w=400&h=400&fit=crop' as the dimensions.
+
+For example, if the product is 'red wireless earbuds', provide an image URL like:
+'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=400&h=400&fit=crop'
+
+Now, suggest details for the following product: [User's product description]"
+
 Now, please provide suggestions for the following:
 User Input: "${question}"`;
 
@@ -84,14 +83,9 @@ User Input: "${question}"`;
           throw new Error(`Gemini API returned an error: ${geminiData.error?.message || JSON.stringify(geminiData)}`);
         }
 
-        // Extract the text content from Gemini's response structure
-        // Gemini's text is usually in candidate[0].content.parts[0].text
-        console.log(geminiData?.candidates?.[0]?.content,"geminiData.candidates.co");
-        console.log(geminiData?.candidates?.[0]?.content?.parts,"geminiData.candidates.content.parts");
-        console.log(geminiData?.candidates?.[0]?.content?.parts[0].text,"geminiData.candidates.content.parts.text");
-        
+       
         const aiResponse = geminiData.candidates?.[0]?.content?.parts?.[0]?.text;
-        console.log(aiResponse,"aiResponse");
+    
         
         try {
           const extractedData = JSON.parse(aiResponse)

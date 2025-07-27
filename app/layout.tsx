@@ -8,6 +8,7 @@ import { Toaster } from "@/components/ui/toaster"
 import { LoadingProvider } from "@/components/loading-provider"
 import { LanguageProvider } from "@/components/language-provider"
 import { AIChatbot } from "@/components/ai-chatbot"
+import { TopBanner } from "@/components/top-banner"
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -29,6 +30,7 @@ export default function RootLayout({
           <LoadingProvider>
             <LanguageProvider>
               <CartProvider>
+                <TopBanner/>
                 <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
                   {children}
                   <Toaster />
