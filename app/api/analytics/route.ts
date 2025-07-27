@@ -3,9 +3,10 @@ import { getAnalytics } from "@/lib/data-store"
 
 export async function GET() {
   try {
-    const data = getAnalytics()
-    return NextResponse.json(data)
+    const analytics = getAnalytics()
+    return NextResponse.json(analytics)
   } catch (error) {
+    console.error("Error loading analytics:", error)
     return NextResponse.json({ error: "Failed to load analytics" }, { status: 500 })
   }
 }

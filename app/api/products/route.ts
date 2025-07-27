@@ -3,9 +3,12 @@ import { getProducts } from "@/lib/data-store"
 
 export async function GET() {
   try {
+    console.log("📡 API: Getting products...")
     const products = getProducts()
-    return NextResponse.json({ products })
+    console.log(`📦 API: Found ${products.length} products`)
+    return NextResponse.json({ products, success: true })
   } catch (error) {
-    return NextResponse.json({ error: "Failed to load products" }, { status: 500 })
+    console.error("❌ API: Error loading products:", error)
+    return NextResponse.json({ error: "Failed to load products", success: false }, { status: 500 })
   }
 }
