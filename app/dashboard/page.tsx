@@ -3,35 +3,31 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Overview } from "@/components/overview"
 import { RecentSales } from "@/components/recent-sales"
 import { CartSummary } from "@/components/cart-summary"
-import { getProducts, getOrders, getAnalytics } from "@/lib/data-store"
+import { getProducts, getOrders,  } from "@/lib/data-store"
 import { Package, BarChart3, ShoppingCart, DollarSign, Users } from "lucide-react"
+import { format } from "date-fns";
+
 
 export default async function DashboardPage() {
  // AWAIT all asynchronous data fetching functions
   // And ensure they return arrays or expected objects, providing fallbacks
-  const rawProducts = await getProducts();
-  const products = Array.isArray(rawProducts) ? rawProducts : []; // Ensure products is an array
+  const products=  getProducts();
+  const orders =  getOrders();
+  const analytics = {
+    totalRevenue: orders.reduce((acc, order) => acc + (order.total || 0), 0),
+    totalCustomers: new Set(orders.map((o) => o.customerEmail)).size,
+  }
 
-  const rawOrders = await getOrders();
-  const orders = Array.isArray(rawOrders) ? rawOrders : []; // Ensure orders is an array
-
-  const rawAnalytics = await getAnalytics();
-  // Ensure analytics is an object, providing default values if null/undefined
-  const analytics = rawAnalytics || { totalRevenue: 0, totalCustomers: 0 };
-
-  // Calculate real statistics from actual data
   const totalProducts = products.length
   const totalOrders = orders.length
-  const totalRevenue = analytics.totalRevenue || 0 // Use fallback for analytics properties
-  const totalCustomers = analytics.totalCustomers || 0 // Use fallback for analytics properties
+  const totalRevenue = analytics.totalRevenue
+  const totalCustomers = analytics.totalCustomers
 
-  // Calculate inventory value - now products is guaranteed to be an array
   const inventoryValue = products.reduce((sum: number, product: any) => {
-    // Add checks for product.price and product.stock to prevent NaN
-    const price = typeof product.price === 'number' ? product.price : 0;
-    const stock = typeof product.stock === 'number' ? product.stock : 0;
-    return sum + price * stock;
-  }, 0);
+    const price = typeof product.price === "number" ? product.price : 0
+    const stock = typeof product.stock === "number" ? product.stock : 0
+    return sum + price * stock
+  }, 0)
 
   const stats = {
     totalProducts,
@@ -41,6 +37,27 @@ export default async function DashboardPage() {
     totalCustomers,
     orders,
   }
+ 
+  function salesDatafunction() {
+  const monthlyTotals: { [key: string]: number } = {};
+
+  for (const order of orders) {
+    const month = format(new Date(order.createdAt), "MMM"); // e.g., "Jan", "Feb"
+    if (!monthlyTotals[month]) {
+      monthlyTotals[month] = 0;
+    }
+    monthlyTotals[month] += order.total || 0;
+  }
+
+  // Convert to the format your chart expects
+  const salesData = Object.keys(monthlyTotals).map((month) => ({
+    name: month,
+    total: monthlyTotals[month],
+  }));
+
+  return salesData;
+}
+const salesData = salesDatafunction()
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 space-y-6 sm:space-y-8">
@@ -117,7 +134,7 @@ export default async function DashboardPage() {
             <p className="text-sm text-muted-foreground">Monthly sales from actual orders</p>
           </CardHeader>
           <CardContent className="p-2 sm:p-6">
-            <Overview />
+            <Overview chartdata={salesData} />
           </CardContent>
         </Card>
 
@@ -129,7 +146,7 @@ export default async function DashboardPage() {
           </CardHeader>
           <CardContent className="p-2 sm:p-6">
             <div className="overflow-x-auto">
-              {/* <RecentSales orders={stats.orders} /> */}
+              <RecentSales orders={stats.orders} />
             </div>
           </CardContent>
         </Card>

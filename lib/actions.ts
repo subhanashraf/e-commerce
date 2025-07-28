@@ -10,6 +10,8 @@ import {
   incrementAIRequestCount,
   getProductLimits,
 } from "./data-store"
+import Stripe from "stripe"
+
 
 export async function addProduct(formData: FormData) {
   try {
@@ -185,8 +187,11 @@ export async function deleteProduct(productId: string) {
   try {
     console.log("🗑️ Deleting product:", productId)
 
-    const products = getProducts()
+    const products = await getProducts()
+    console.log(products,"prskndjksdn");
+    
     const product = products.find((p) => p.id === productId)
+
 
     if (!product) {
       console.log("❌ Product not found for deletion:", productId)
@@ -330,40 +335,48 @@ export async function addProductFromAI(extractedData: any) {
   }
 }
 
-export async function createStripeCheckout(productId: string, quantity = 1) {
+export async function createStripeCheckout(items: any[], customerInfo: any) {
   try {
+
+
     if (!process.env.STRIPE_SECRET_KEY) {
       throw new Error("Stripe not configured - please add STRIPE_SECRET_KEY to environment variables")
     }
 
-    // Get product data
-    const products = getProducts()
-    const product = products.find((p) => p.id === productId)
-
-    if (!product) {
-      throw new Error("Product not found")
-    }
-
-    if (!product.stripePriceId) {
-      throw new Error("Product not properly configured with Stripe")
-    }
-
     const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY)
+
+    // Create line items for Stripe
+    const lineItems = items.map((item) => ({
+      price_data: {
+        currency: "usd",
+        product_data: {
+          name: item.name,
+          images: [item.image],
+          metadata: {
+            productId: item.id,
+          },
+        },
+        unit_amount: Math.round(item.price * 100), // Convert to cents
+      },
+      quantity: item.quantity,
+    }))
 
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
-      line_items: [
-        {
-          price: product.stripePriceId,
-          quantity: quantity,
-        },
-      ],
+      line_items: lineItems,
       mode: "payment",
       success_url: `${process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"}/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"}/product/${productId}`,
+      cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"}/cart`,
+      customer_email: customerInfo.email,
+     
+      billing_address_collection: "required",
+      phone_number_collection: {
+        enabled: true,
+      },
       metadata: {
-        productId: productId,
-        productName: product.name,
+        customerName: customerInfo.name,
+        customerEmail: customerInfo.email,
+        customerPhone: customerInfo.phone || "",
       },
     })
 
@@ -382,69 +395,132 @@ export async function createStripeCheckout(productId: string, quantity = 1) {
     }
   }
 }
+interface LineItem {
+  id: string
+  name: string
+  price: number
+  image: string
+  quantity: number
+}
 
-export async function createStripeCheckoutitem(productId:ProduectNUmber[]) {
+interface CustomerInfo {
+  name: string
+  email: string
+  phone?: string
+}
+
+interface CheckoutResult {
+  success: boolean
+  url?: string
+  sessionId?: string
+  error?: string
+}
+
+export async function createStripeCheckoutone(
+  items: LineItem[],
+  customerInfo: CustomerInfo
+): Promise<CheckoutResult> {
+  // Validate environment variables
+  if (!process.env.STRIPE_SECRET_KEY) {
+    console.error("Stripe secret key not configured")
+    return {
+      success: false,
+      error: "Payment system is currently unavailable. Please try again later."
+    }
+  }
+
+  // Validate input data
+  if (!items || items.length === 0) {
+    return {
+      success: false,
+      error: "No items provided for checkout"
+    }
+  }
+
+  if (!customerInfo?.email) {
+    return {
+      success: false,
+      error: "Customer email is required"
+    }
+  }
+
+  const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+    apiVersion: "2023-10-16"
+  })
+
   try {
-    if (!process.env.STRIPE_SECRET_KEY) {
-      throw new Error("Stripe not configured - please add STRIPE_SECRET_KEY to environment variables")
-    }
-    const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY)
-
-     const lineItems = [];
-    const metadata: { [key: string]: string } = {}; // To store metadata for the session
-
-    // Iterate over the items received from the client
-    for (const clientItem of productId) {
-      const products = getProducts(); // Assuming getProducts() is defined and accessible
-      const product = products.find((p) => p.id === clientItem.productId);
-
-      if (!product) {
-        throw new Error(`Product with ID ${clientItem.productId} not found.`);
+    // Prepare line items
+    const lineItems = items.map(item => {
+      if (!item.price || item.price <= 0) {
+        throw new Error(`Invalid price for item: ${item.name}`)
+      }
+      if (!item.quantity || item.quantity <= 0) {
+        throw new Error(`Invalid quantity for item: ${item.name}`)
       }
 
-      if (!product.stripeProductId) {
-        throw new Error(`Product ${product.name} (ID: ${product.id}) not properly configured with Stripe (missing stripePriceId).`);
+      return {
+        price_data: {
+          currency: "usd",
+          product_data: {
+            name: item.name,
+            images: [item.image],
+            metadata: {
+              productId: item.id
+            }
+          },
+          unit_amount: Math.round(item.price * 100) // Convert to cents
+        },
+        quantity: item.quantity
       }
+    })
 
-      if (clientItem.quantity <= 0 || clientItem.quantity > product.stock) {
-          throw new Error(`Invalid quantity for product ${product.name}. Requested: ${clientItem.quantity}, Available: ${product.stock}`);
-      }
-
-      lineItems.push({
-        price: product.stripePriceId, // Use the Stripe Price ID
-        quantity: clientItem.quantity, // Use the quantity from the client request
-      });
-
-      // Add product details to session metadata (optional, for your records)
-      metadata[`product_${clientItem.productId}_name`] = product.name;
-      metadata[`product_${clientItem.productId}_quantity`] = clientItem.quantity.toString();
-    }
-
-    if (lineItems.length === 0) {
-      throw new Error("No valid items to checkout.");
-    }
-
+    // Create checkout session
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
       line_items: lineItems,
       mode: "payment",
       success_url: `${process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"}/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"}/product/${productId}`,
-      metadata: metadata,
+      cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"}/cart`,
+      customer_email: customerInfo.email,
+      billing_address_collection: "required",
+      phone_number_collection: {
+        enabled: true
+      },
+      metadata: {
+        customerName: customerInfo.name,
+        customerEmail: customerInfo.email,
+        customerPhone: customerInfo.phone || "",
+        productIds: items.map(item => item.id).join(",")
+      },
+      shipping_address_collection: {
+        allowed_countries: ["US", "CA", "GB"] // Customize as needed
+      }
     })
 
-   
+    if (!session.url) {
+      throw new Error("Failed to create checkout session URL")
+    }
 
     return {
       success: true,
       url: session.url,
-      sessionId: session.id,
+      sessionId: session.id
     }
+
   } catch (error) {
-    console.error("❌ Error creating Stripe checkout:", error)
+    console.error("Stripe checkout error:", error)
+    
+    let errorMessage = "Failed to process payment"
+    if (error instanceof Stripe.errors.StripeError) {
+      errorMessage = error.message
+    } else if (error instanceof Error) {
+      errorMessage = error.message
+    }
+
     return {
       success: false,
-      error: error.message || "Failed to create checkout session. Please try again.",
+      error: errorMessage
     }
   }
 }
+

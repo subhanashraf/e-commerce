@@ -4,7 +4,7 @@ import { getProducts } from "@/lib/data-store"
 
 export default async function ShopPage() {
   const rawProducts = await getProducts();
-  const products = Array.isArray(rawProducts) ? rawProducts : [];
+  const products = rawProducts
 
   return (
     <div className="min-h-screen">

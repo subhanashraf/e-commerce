@@ -3,7 +3,8 @@ import { getUsers } from "@/lib/data-store"
 
 export default async function UsersPage() {
   const users = getUsers()
-
+  
+  
   return (
     <div className="p-4 sm:p-6 lg:p-8">
       <div className="mb-6 sm:mb-8">
