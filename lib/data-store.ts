@@ -182,6 +182,8 @@ export function updateProduct(id: string, updates: Partial<Product>): Product | 
 
 export function deleteProduct(id: string): boolean {
   const products = getProducts()
+  console.log(products,"jsnjkdcksdkjcsjkdckjsdcjknsjkdmj");
+  
   const filteredProducts = products.filter((p) => p.id !== id)
 
   if (filteredProducts.length === products.length) return false
@@ -195,6 +197,10 @@ export function deleteProduct(id: string): boolean {
 export function getOrders(): Order[] {
   return readJSONFile<Order[]>(ORDERS_FILE, [])
 }
+
+// types.ts or at the top of your file
+
+
 
 export function addOrder(orderData: Omit<Order, "id" | "createdAt" | "updatedAt">): Order {
   const orders = getOrders()

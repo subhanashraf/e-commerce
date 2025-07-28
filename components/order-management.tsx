@@ -6,28 +6,57 @@ import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { useToast } from "@/hooks/use-toast"
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area"
+
+interface Address {
+  city: string
+  country: string
+  line1: string
+  line2?: string
+  postal_code: string
+  state?: string
+}
+
+interface OrderItem {
+  productName: string
+  quantity: number
+  price: number
+  total: number
+}
 
 interface Order {
   id: string
-  userName: string
-  email: string
-  products: any[]
+  customerName: string
+  customerEmail: string
+  customerPhone: string
+  billingAddress: Address
+  shippingAddress: Address
+  items: OrderItem[]
   status: string
+  paymentStatus: string
+  stripePaymentIntentId: string
+  stripeSessionId: string
   total: number
-  date: string
+  currency: string
+  createdAt: string
+  updatedAt: string
+  metadata: {
+    customerEmail: string
+    customerName: string
+    customerPhone: string
+  }
 }
 
-interface OrderManagementProps {
-  orders: Order[]
-}
-
-export function OrderManagement({ orders: initialOrders }: OrderManagementProps) {
+export function OrderManagement({ orders: initialOrders }: { orders: Order[] }) {
   const [orders, setOrders] = useState(initialOrders || [])
   const { toast } = useToast()
 
   const updateOrderStatus = (orderId: string, newStatus: string) => {
-    setOrders((prev) => prev.map((order) => (order.id === orderId ? { ...order, status: newStatus } : order)))
-
+    setOrders(prev => 
+      prev.map(order => 
+        order.id === orderId ? { ...order, status: newStatus } : order
+      )
+    )
     toast({
       title: "Order status updated",
       description: `Order ${orderId} status changed to ${newStatus}`,
@@ -36,22 +65,33 @@ export function OrderManagement({ orders: initialOrders }: OrderManagementProps)
 
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
-      case "pending":
-        return "bg-yellow-500"
-      case "shipped":
-        return "bg-blue-500"
-      case "delivered":
-        return "bg-green-500"
-      case "cancelled":
-        return "bg-red-500"
-      default:
-        return "bg-gray-500"
+      case "pending": return "bg-yellow-500"
+      case "completed": return "bg-green-500"
+      case "shipped": return "bg-blue-500"
+      case "cancelled": return "bg-red-500"
+      default: return "bg-gray-500"
     }
   }
 
+  const formatAddress = (address: Address) => {
+    return `${address.line1}${address.line2 ? `, ${address.line2}` : ''}, ${address.city}, ${address.postal_code}, ${address.country}`
+  }
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    })
+  }
+
+   
+
   if (!orders || orders.length === 0) {
     return (
-      <Card className="hover:shadow-lg transition-shadow bg-gradient-to-br from-card to-card/95">
+      <Card className="hover:shadow-lg transition-shadow">
         <CardHeader>
           <CardTitle className="bg-gradient-to-r from-primary to-purple-400 bg-clip-text text-transparent">
             All Orders
@@ -67,40 +107,64 @@ export function OrderManagement({ orders: initialOrders }: OrderManagementProps)
   }
 
   return (
-    <Card className="hover:shadow-lg transition-shadow bg-gradient-to-br from-card to-card/95">
+    <Card className="hover:shadow-lg transition-shadow">
       <CardHeader>
         <CardTitle className="bg-gradient-to-r from-primary to-purple-400 bg-clip-text text-transparent">
           All Orders
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Order ID</TableHead>
-                <TableHead>Customer</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead>Products</TableHead>
-                <TableHead>Total</TableHead>
-                <TableHead>Date</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {orders.map((order) => (
-                <TableRow key={order.id} className="hover:bg-muted/50">
-                  <TableCell className="font-medium">{order.id}</TableCell>
-                  <TableCell>{order.userName}</TableCell>
-                  <TableCell>{order.email}</TableCell>
-                  <TableCell>{order.products?.length || 0}</TableCell>
-                  <TableCell>${order.total.toFixed(2)}</TableCell>
-                  <TableCell>{new Date(order.date).toLocaleDateString()}</TableCell>
-                  <TableCell>
-                    <Badge className={getStatusColor(order.status)}>{order.status}</Badge>
-                  </TableCell>
-                  <TableCell>
+        <ScrollArea className="w-full whitespace-nowrap rounded-md border">
+           <div className="min-w-[500px] max-w-[800px]">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="min-w-[120px]">Order ID</TableHead>
+                  <TableHead className="min-w-[150px]">Customer</TableHead>
+                  <TableHead className="min-w-[180px]">Email</TableHead>
+                  <TableHead className="min-w-[120px]">Phone</TableHead>
+                  <TableHead className="min-w-[200px]">Shipping Address</TableHead>
+                  <TableHead className="min-w-[200px]">Billing Address</TableHead>
+                  <TableHead className="min-w-[150px]">Items</TableHead>
+                  <TableHead className="min-w-[100px]">Total</TableHead>
+                  <TableHead className="min-w-[100px]">Status</TableHead>
+                  <TableHead className="min-w-[100px]">Change Status</TableHead>
+                  <TableHead className="min-w-[100px]">Payment</TableHead>
+                  <TableHead className="min-w-[150px]">Stripe ID</TableHead>
+                  <TableHead className="min-w-[150px]">Session ID</TableHead>
+                  <TableHead className="min-w-[150px]">Created</TableHead>
+                  <TableHead className="min-w-[150px]">Updated</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {orders.map((order) => (
+                  <TableRow key={order.id} className="hover:bg-muted/50">
+                    <TableCell className="font-medium truncate">{order.id}</TableCell>
+                    <TableCell className="truncate">{order.customerName}</TableCell>
+                    <TableCell className="truncate">{order.customerEmail}</TableCell>
+                    <TableCell className="truncate">{order.customerPhone}</TableCell>
+                    <TableCell className="truncate" title={formatAddress(order.shippingAddress)}>
+                      {formatAddress(order.shippingAddress)}
+                    </TableCell>
+                    <TableCell className="truncate" title={formatAddress(order.billingAddress)}>
+                      {formatAddress(order.billingAddress)}
+                    </TableCell>
+                    <TableCell>
+                      {order.items.map(item => (
+                        <div key={`${order.id}-${item.productName}`}>
+                          {item.productName} × {item.quantity}
+                        </div>
+                      ))}
+                    </TableCell>
+                    <TableCell>
+                      {order.total.toFixed(2)} {order.currency.toUpperCase()}
+                    </TableCell>
+                    <TableCell>
+                      <Badge className={getStatusColor(order.status)}>
+                        {order.status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
                     <Select value={order.status} onValueChange={(value) => updateOrderStatus(order.id, value)}>
                       <SelectTrigger className="w-32">
                         <SelectValue />
@@ -113,11 +177,27 @@ export function OrderManagement({ orders: initialOrders }: OrderManagementProps)
                       </SelectContent>
                     </Select>
                   </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
+                    
+                    <TableCell>
+                      <Badge variant={order.paymentStatus === 'paid' ? 'default' : 'destructive'}>
+                        {order.paymentStatus}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="truncate" title={order.stripePaymentIntentId}>
+                      {order.stripePaymentIntentId}
+                    </TableCell>
+                    <TableCell className="truncate" title={order.stripeSessionId}>
+                      {order.stripeSessionId}
+                    </TableCell>
+                    <TableCell>{formatDate(order.createdAt)}</TableCell>
+                    <TableCell>{formatDate(order.updatedAt)}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+          <ScrollBar orientation="horizontal" />
+        </ScrollArea>
       </CardContent>
     </Card>
   )

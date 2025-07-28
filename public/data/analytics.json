@@ -1,8 +1,20 @@
 {
-  "totalRevenue": 0,
-  "totalOrders": 0,
-  "totalCustomers": 0,
-  "monthlyData": [],
-  "topProducts": [],
-  "lastUpdated": "2024-01-01T00:00:00.000Z"
+  "totalRevenue": 255.04,
+  "totalOrders": 16,
+  "totalCustomers": 16,
+  "monthlyData": [
+    {
+      "month": "2025-07",
+      "revenue": 255.04,
+      "orders": 16
+    }
+  ],
+  "topProducts": [
+    {
+      "productName": "table",
+      "totalSold": 16,
+      "revenue": 255.04
+    }
+  ],
+  "lastUpdated": "2025-07-28T13:27:02.014Z"
 }

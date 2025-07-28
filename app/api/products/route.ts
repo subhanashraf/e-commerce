@@ -4,7 +4,8 @@ import { getProducts } from "@/lib/data-store"
 export async function GET() {
   try {
     console.log("📡 API: Getting products...")
-    const products = getProducts()
+    const data = await getProducts()
+    const products = data
     console.log(`📦 API: Found ${products.length} products`)
     return NextResponse.json({ products, success: true })
   } catch (error) {

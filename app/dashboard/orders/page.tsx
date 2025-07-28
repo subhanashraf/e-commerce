@@ -1,8 +1,9 @@
-import { OrderManagement } from "@/components/order-management"
-import { getOrders } from "@/lib/data-store"
+
+import { OrderManagement } from "@/components/order-management";
+import { getOrders } from "@/lib/data-store";
 
 export default async function OrdersPage() {
-  const orders = getOrders()
+  const orders =  getOrders();
 
   return (
     <div className="p-4 sm:p-6 lg:p-8">
@@ -10,10 +11,18 @@ export default async function OrdersPage() {
         <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-primary to-purple-400 bg-clip-text text-transparent">
           Order Management
         </h1>
-        <p className="text-sm sm:text-base text-muted-foreground mt-1">Manage and track all customer orders</p>
+        <p className="text-sm sm:text-base text-muted-foreground mt-1">
+          Manage and track all customer orders
+        </p>
       </div>
 
-      <OrderManagement orders={orders} />
+      <div className="container mx-auto p-4">
+        {orders && orders.length > 0 ? (
+          <OrderManagement orders={orders} />
+        ) : (
+          <p className="text-center text-gray-500">No orders found.</p>
+        )}
+      </div>
     </div>
-  )
+  );
 }

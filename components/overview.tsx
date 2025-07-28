@@ -3,33 +3,11 @@
 import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip, Cell } from "recharts"
 import { useEffect, useState } from "react"
 
-export function Overview() {
-  const [data, setData] = useState([])
-  const [isLoading, setIsLoading] = useState(true)
+export function Overview({chartdata}) {
+  const [data, setData] = useState(chartdata)
+  const [isLoading, setIsLoading] = useState(false)
 
-  useEffect(() => {
-    const loadAnalytics = async () => {
-      try {
-        const response = await fetch("/api/analytics")
-        const analytics = await response.json()
-        setData(analytics.salesData || [])
-      } catch (error) {
-        console.error("Failed to load analytics:", error)
-        // Fallback data
-        setData([
-          { name: "Jan", total: 4500 },
-          { name: "Feb", total: 5200 },
-          { name: "Mar", total: 4800 },
-          { name: "Apr", total: 6100 },
-          { name: "May", total: 5800 },
-          { name: "Jun", total: 6500 },
-        ])
-      } finally {
-        setIsLoading(false)
-      }
-    }
-    loadAnalytics()
-  }, [])
+
 
   if (isLoading) {
     return (
@@ -42,7 +20,7 @@ export function Overview() {
   return (
     <div className="w-full">
       <div className="overflow-x-auto">
-        <div className="min-w-[400px] h-[350px]">
+        <div className="min-w-[200px] h-[350px]">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={data} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
               <XAxis dataKey="name" stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />

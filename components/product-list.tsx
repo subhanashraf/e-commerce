@@ -8,6 +8,7 @@ import { Edit, Trash2, Package } from "lucide-react"
 import { EditProductDialog } from "@/components/edit-product-dialog"
 import { useToast } from "@/hooks/use-toast"
 import Image from "next/image"
+import { getProducts } from "@/lib/data-store"
 
 interface Product {
   id: string
