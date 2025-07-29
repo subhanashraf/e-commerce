@@ -32,7 +32,8 @@ export function Navbar() {
           </Link>
 
           {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center space-x-8">
+             <div className="hidden md:flex space-x-6 absolute left-1/2 -translate-x-1/2">
+
             {navItems.map((item) => (
               <Link
                 key={item.href}
