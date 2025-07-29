@@ -8,7 +8,7 @@ import { Edit, Trash2, Package } from "lucide-react"
 import { EditProductDialog } from "@/components/edit-product-dialog"
 import { useToast } from "@/hooks/use-toast"
 import Image from "next/image"
-import { getProducts } from "@/lib/data-store"
+import { getProducts } from "@/app/actions/produect"
 
 interface Product {
   id: string
@@ -40,15 +40,12 @@ export function ProductList() {
   const loadProducts = async () => {
     try {
       console.log("📡 Loading products...")
-      const response = await fetch("/api/products")
-      const data = await response.json()
+      const response = await getProducts()
+      const data = await response
 
-      if (data.success) {
-        console.log(`📦 Loaded ${data.products.length} products`)
-        setProducts(data.products || [])
-      } else {
-        throw new Error(data.error || "Failed to load products")
-      }
+  
+        setProducts(data || [])
+   
     } catch (error) {
       console.error("❌ Error loading products:", error)
       toast({

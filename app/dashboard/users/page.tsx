@@ -1,8 +1,8 @@
 import { UserAccounts } from "@/components/user-accounts"
-import { getUsers } from "@/lib/data-store"
+import { getUsers } from "@/app/actions/user"
 
 export default async function UsersPage() {
-  const users = getUsers()
+  const users = await getUsers()
   
   
   return (

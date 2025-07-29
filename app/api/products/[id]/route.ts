@@ -1,5 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { deleteProduct } from "@/lib/actions"
+import { deleteProduct } from "@/app/actions/produect"
 
 export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
   try {
@@ -7,7 +7,7 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
 
     const result = await deleteProduct(params.id)
 
-    if (result.success) {
+    if (result) {
       console.log("✅ API: Product deleted successfully")
       return NextResponse.json({ success: true })
     } else {

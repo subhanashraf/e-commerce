@@ -1,7 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { readFile } from "fs/promises"
 import { join } from "path"
-import { getProducts } from "@/lib/data-store"
+import { getProducts } from "@/app/actions/produect"
 
 
 
@@ -29,7 +29,7 @@ Given a product description  your are handle user like use question other filed 
   "category": "Relevant category",
   "brand": "Plausible brand name",
   "metaTags": ["comma", "separated", "keywords"],
-  "imageUrl": "https://images.unsplash.com/photo-PHOTO_ID?w=400&h=400&fit=crop"
+  "imageUrl": "https://images.unsplash.com/photo-PHOTO_ID?w=400&h=400&fit=crop" this is important
 }
 
 Rules:
@@ -50,7 +50,7 @@ Product to describe: "${question.trim()}"`
           body: JSON.stringify({
             contents: [{ parts: [{ text: systemPrompt }] }],
             generationConfig: {
-              maxOutputTokens: 300,
+              maxOutputTokens: 500,
               temperature: 0.1,
               topP: 0.9,
               // If using gemini-1.5-flash and want explicit JSON mode (highly recommended for this task):

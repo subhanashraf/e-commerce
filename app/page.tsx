@@ -1,10 +1,12 @@
+
+"use client "
 import { Navbar } from "@/components/navbar"
 import { ProductCard } from "@/components/product-card"
 import { HeroCarousel } from "@/components/hero-carousel"
 import { CompanySection } from "@/components/company-section"
 import { FAQSection } from "@/components/faq-section"
 import { Footer } from "@/components/footer"
-import { getProducts } from "@/lib/data-store"
+import { getProducts } from "@/app/actions/produect"
 
 export default async function HomePage() {
    const rawProducts = await getProducts();
@@ -30,9 +32,11 @@ export default async function HomePage() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {featuredProducts.map((product) => (
-              <ProductCard key={product.id} product={product} />
-            ))}
+  {featuredProducts?.map((product) => {
+ 
+  return <ProductCard key={product.id} product={product} />
+})}
+
           </div>
         </div>
       </section>
