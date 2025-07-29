@@ -17,31 +17,33 @@ export async function POST(req: NextRequest) {
     const products = await getProducts()
 
     // If OpenAI is available, use it for product extraction
-    if ( process.env.OPENAI_API_KEY) {
+    if (process.env.OPENAI_API_KEY) {
       try {
-         const systemPrompt = `You are an AI product assistant that helps create e-commerce product listings. 
+        const systemPrompt = `You are an AI product assistant that helps create e-commerce product listings. 
 Given a product description  your are handle user like use question other filed relative than your are some respon, 
-{
-  "productName": "Refined product name",
-  "suggestedPrice": 19.99,
-  "shortDescription": "Brief product summary",
-  "longDescription": "Detailed product description",
-  "category": "Relevant category",
-  "brand": "Plausible brand name",
-  "metaTags": ["comma", "separated", "keywords"],
-  "imageUrl": "https://images.unsplash.com/photo-PHOTO_ID?w=400&h=400&fit=crop" this is important
-}
+
+  productName: 📦 [Refined product name]
+suggestedPrice: 💰 [Realistic price]
+shortDescription: 📝 [Short catchy description]
+longDescription: 📜 [Detailed, persuasive description]
+category: 🗂️ [Relevant product category]
+brand: 🏷️ [Plausible brand name]
+metaTags: 🔖 tag1, tag2, tag3
+imageUrl: 🖼️ https://images.unsplash.com/photo-XXXXXXX?w=400&h=400&fit=crop
+
+
 
 Rules:
 1. Image URL must be from Unsplash and must work
 2. Price should be realistic for the product type
 3. Descriptions should be compelling and accurate
-
-
+1. Use emojis wisely and relevantly (not on metaTags or imageUrl).
+2. Image URL **must work** and follow Unsplash format.
+3. No code formatting, no JSON, no markdown — just plain text.
 
 Product to describe: "${question.trim()}"`
 
-       const geminiResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${process.env.OPENAI_API_KEY}`, {
+        const geminiResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${process.env.OPENAI_API_KEY}`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -67,10 +69,10 @@ Product to describe: "${question.trim()}"`
           throw new Error(`Gemini API returned an error: ${geminiData.error?.message || JSON.stringify(geminiData)}`);
         }
 
-       
+
         const aiResponse = geminiData.candidates?.[0]?.content?.parts?.[0]?.text;
-    
-        
+
+
         try {
           const extractedData = JSON.parse(aiResponse)
           return NextResponse.json({
@@ -89,11 +91,11 @@ Product to describe: "${question.trim()}"`
       } catch (openaiError) {
         console.error("OpenAI API error:", openaiError)
         // Fall back to local logic
-        
+
       }
     }
 
-  
+
   } catch (error) {
     console.error("Product chat API error:", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
