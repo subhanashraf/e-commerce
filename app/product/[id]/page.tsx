@@ -1,7 +1,7 @@
 import { Navbar } from "@/components/navbar"
 import { ProductDetail } from "@/components/product-detail"
 import { ProductCard } from "@/components/product-card"
-import {  getProducts } from "@/lib/data-store"
+import {  getProducts } from "@/app/actions/produect"
 import { notFound } from "next/navigation"
 
 export default async function ProductPage({ params }: { params: { id: string } }) {

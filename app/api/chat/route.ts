@@ -1,7 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server"
 
 import { join } from "path"
-import { getProducts } from "@/lib/data-store"
+import { getProducts } from "@/app/actions/produect"
 
 
 export async function POST(req: NextRequest) {

@@ -9,7 +9,8 @@ import { Button } from "@/components/ui/button";
 import { CheckCircle, ShoppingBag, Home } from "lucide-react";
 import Link from "next/link";
 import Stripe from "stripe";
-import { getOrders, addUser, addOrder } from "@/lib/data-store";
+import { addUser  } from "@/app/actions/user";
+import { getOrders,addOrder } from "@/app/actions/order"
 
 export default async function SuccessPage({
   searchParams,
@@ -27,9 +28,10 @@ export default async function SuccessPage({
       expand: ["line_items", "customer"],
     });
 
-    const existingOrder = getOrders().find(
-      (order) => order.stripeSessionId === session.id
-    );
+   const orders = await getOrders();
+const existingOrder = orders.find(
+  (order) => order.stripeSessionId === session.id
+);
 
     if (!existingOrder) {
       const user = {

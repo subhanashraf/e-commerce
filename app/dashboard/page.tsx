@@ -3,7 +3,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Overview } from "@/components/overview"
 import { RecentSales } from "@/components/recent-sales"
 import { CartSummary } from "@/components/cart-summary"
-import { getProducts, getOrders,  } from "@/lib/data-store"
+import {   } from "@/lib/data-store"
+import { getProducts } from "@/app/actions/produect"
+import {getOrders } from "@/app/actions/order"
 import { Package, BarChart3, ShoppingCart, DollarSign, Users } from "lucide-react"
 import { format } from "date-fns";
 
@@ -11,8 +13,10 @@ import { format } from "date-fns";
 export default async function DashboardPage() {
  // AWAIT all asynchronous data fetching functions
   // And ensure they return arrays or expected objects, providing fallbacks
-  const products=  getProducts();
-  const orders =  getOrders();
+  const products=  await getProducts();
+  const orders =  await getOrders();
+  
+  
   const analytics = {
     totalRevenue: orders.reduce((acc, order) => acc + (order.total || 0), 0),
     totalCustomers: new Set(orders.map((o) => o.customerEmail)).size,

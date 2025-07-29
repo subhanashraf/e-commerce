@@ -1,15 +1,9 @@
 "use server"
 
 import { revalidatePath } from "next/cache"
-import {
-  getProducts,
-  addProduct as addProductToStore,
-  updateProduct as updateProductInStore,
-  deleteProduct as deleteProductFromStore,
-  canMakeAIRequest,
-  incrementAIRequestCount,
-  getProductLimits,
-} from "./data-store"
+
+import { getProducts,  addProduct as  addProductToStore,  updateProduct as updateProductInStore,
+  deleteProduct as deleteProductFromStore, } from "@/app/actions/produect"
 import Stripe from "stripe"
 
 
@@ -17,17 +11,7 @@ export async function addProduct(formData: FormData) {
   try {
     console.log("🚀 Starting addProduct action...")
 
-    // Check product limit first
-    const limits = getProductLimits()
-    console.log("📊 Product limits:", limits)
-
-    if (limits.remaining <= 0) {
-      console.log("❌ Product limit reached")
-      return {
-        success: false,
-        error: `Maximum ${limits.limit} products allowed. Please delete some products before adding new ones.`,
-      }
-    }
+   
 
     const productData = {
       name: formData.get("name") as string,
@@ -110,7 +94,7 @@ export async function addProduct(formData: FormData) {
     revalidatePath("/dashboard/add-product")
     revalidatePath("/")
 
-    return { success: true, productId: newProduct.id, product: newProduct }
+    return { success: true, productId: newProduct._id, product: newProduct }
   } catch (error) {
     console.error("❌ Error adding product:", error)
     return { success: false, error: error.message || "Failed to add product" }
@@ -243,26 +227,11 @@ export async function addProductFromAI(extractedData: any) {
     console.log("🤖 Adding product from AI:", extractedData)
 
     // Check AI request limit
-    if (!canMakeAIRequest()) {
-      console.log("❌ AI request limit reached")
-      return {
-        success: false,
-        error: "Daily AI request limit reached (10/day). Please try again tomorrow.",
-      }
-    }
+   
 
-    // Check product limit
-    const limits = getProductLimits()
-    if (limits.remaining <= 0) {
-      console.log("❌ Product limit reached")
-      return {
-        success: false,
-        error: `Maximum ${limits.limit} products allowed. Please delete some products before adding new ones.`,
-      }
-    }
+   
 
-    // Increment AI request count
-    incrementAIRequestCount()
+ 
 
     const productData = {
       name: extractedData.name,
@@ -353,7 +322,7 @@ export async function createStripeCheckout(items: any[], customerInfo: any) {
           name: item.name,
           images: [item.image],
           metadata: {
-            productId: item.id,
+            productId: item._id,
           },
         },
         unit_amount: Math.round(item.price * 100), // Convert to cents

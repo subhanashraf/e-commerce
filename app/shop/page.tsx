@@ -1,6 +1,6 @@
 import { Navbar } from "@/components/navbar"
 import { ProductCard } from "@/components/product-card"
-import { getProducts } from "@/lib/data-store"
+import { getProducts } from "@/app/actions/produect"
 
 export default async function ShopPage() {
   const rawProducts = await getProducts();

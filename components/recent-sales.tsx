@@ -1,7 +1,7 @@
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 
 interface Order {
-  id: string
+  _id: string
   userName: string
   email: string
   products: any[]

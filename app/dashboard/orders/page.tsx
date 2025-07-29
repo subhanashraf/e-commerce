@@ -1,10 +1,10 @@
 
 import { OrderManagement } from "@/components/order-management";
-import { getOrders } from "@/lib/data-store";
+import { getOrders } from "@/app/actions/order";
 
 export default async function OrdersPage() {
-  const orders =  getOrders();
-
+  const rawOrders = await getOrders();
+   const orders = JSON.parse( JSON.stringify(rawOrders) ) 
   return (
     <div className="p-4 sm:p-6 lg:p-8">
       <div className="mb-6 sm:mb-8">
